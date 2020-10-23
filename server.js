@@ -4,15 +4,17 @@ const jwt = require('jsonwebtoken');
 const exjwt = require('express-jwt');
 const bodyParser = require('body-Parser');
 const path = require('path');
-app.use(bodyParser.json());
-
-app.use(bodyParser.urlencoded({extended:true}));
+// history.replaceState(null,null,'hello');
 app.use((req,res,next)=>{
 
     res.setHeader('Access-Control-Allow-Origin','http://localhost:3000');
     res.setHeader('Access-Control-Allow-Headers','Content-type,Authorization');
     next();
 });
+app.use(bodyParser.json());
+
+app.use(bodyParser.urlencoded({extended:true}));
+
 const PORT =3000;
 const secretKey = 'My super secret key';
 const jwtMW =exjwt({
@@ -50,7 +52,7 @@ for(let user of users){
 
     if(username==user.username && password==user.password){
 
-        let token =jwt.sign({id:user.id, username:user.username , password: user.password}, secretKey,{expiresIn:'7d'});
+        let token =jwt.sign({id:user.id, username:user.username , password: user.password}, secretKey,{expiresIn:'6d'});
         res.json({
             success:true,
             err:null,
@@ -76,6 +78,27 @@ app.get('/api/dashboard',jwtMW,(req,res)=>{
 
         success:true,
         myContent: 'Secret COntent only visible to authorized users'
+    });
+});
+
+app.get('/api/prices',jwtMW,(req,res)=>{
+
+    // console.log(req);
+    res.json({
+
+        success:true,
+        myContent: 'Price is $3.89'
+    });
+});
+
+
+app.get('/api/settings',jwtMW,(req,res)=>{
+
+    // console.log(req);
+    res.json({
+
+        success:true,
+        myContent: 'settings route created'
     });
 });
 
