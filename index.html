@@ -65,6 +65,7 @@
                     localStorage.setItem('jwt',token);
                     getDashboard();
                     getsettings();
+                    
                 }
             });
 
@@ -83,7 +84,14 @@
                 if(res&& res.data&& res.data.success){
                     document.querySelector('h1.row').innerHTML ='Dashboard';
                     document.querySelector('main').innerHTML =res.data.myContent;
+                    setTimeout(() => {
+                        if(!isAuthenticated()){
+                            window.location.href = "/";
+                        }
+                    }, 180000);
                 }
+            }).catch(err => {
+                console.log(err);
             });
         }
 
@@ -99,80 +107,63 @@
                 if(res&& res.data&& res.data.success){
                     document.querySelector('h1.row').innerHTML ='settings';
                     document.querySelector('main').innerHTML =res.data.myContent;
+                    setTimeout(() => {
+                        if(!isAuthenticated()){
+                            window.location.href = "/";
+                        }    
+                    }, 180000);
+                }
+                else{
+                    history.pushState(null, null, '/');
+                    location.reload();
                 }
             });
+            
         }
-
-        function event(){
-            router.post('/fusionauth-webhook', function(req, res, next) {
-  JWTManager.revoke(req.body.event.userId, req.body.event.applicationTimeToLiveInSeconds[applicationId]);
-  res.sendStatus(200);
-});
-
-            {
-  event= {
-    "type": "jwt.refresh-token.revoke",
-    "applicationTimeToLiveInSeconds": {
-      "cc0567da-68a1-45f3-b15b-5a6228bb7146": 600
-    },
-    "userId": "00000000-0000-0000-0000-000000000001"
-  }
-  const JWTManager = {
-  revokedJWTs: {},
-
-  /**
-   * Checks if a JWT is valid. This assumes that the JWT contains a property named <code>exp</code> that is a
-   * NumericDate value defined in the JWT specification and a property named <code>sub</code> that is the user id the
-   * JWT belongs to.
-   *
-   * @param {object} jwt The JWT object.
-   * @returns {boolean} True if the JWT is valid, false if it isn't.
-   */
-  isValid: function(jwt) {
-    const expiration = JWTManager.revokedJWTs[jwt.sub];
-    return expiration === undefined || expiration === null || expiration < jwt.exp * 1000;
-  },
-
-  /**
-   * Revokes all JWTs for the user with the given id using the duration (in seconds).
-   *
-   * @param {string} userId The user id (usually a UUID as a string).
-   * @param {Number} durationSeconds The duration of all JWTs in seconds.
-   */
-  revoke: function(userId, durationSeconds) {
-    JWTManager.revokedJWTs[userId] = Date.now() + (durationSeconds * 1000);
-  },
-
-  /**
-   * Cleans up the cache to remove old user's that have expired.
-   * @private
-   */
-  _cleanUp: function() {
-    const now = Date.now();
-    Object.keys(JWTManager.revokedJWTs).forEach((item, index, _array) => {
-      const expiration = JWTManager.revokedJWTs[item];
-      if (expiration < now) {
-        delete JWTManager.revokedJWTs[item];
-      }
-    });
-  }
-};
-
-/**
- * Set an interval to clean-up the cache.
- */
-setInterval(JWTManager._cleanUp, 7000);
-router.get('/todo', function(req, res, next) {
-  const jwt = _parseJWT(req);
-  if (!JWTManager.isValid(jwt)) {
-    res.sendStatus(401);
-    return;
-  }
-
-  // ...
-});
-};
+        function isAuthenticated() {
+            const token = localStorage.getItem('jwt');
+            console.log('in isAuthenticated ')
+            try {
+                console.log(token);
+                var base64Url = token.split(".")[1];
+                var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+                var jsonPayload = decodeURIComponent(
+                    atob(base64)
+                    .split("")
+                    .map(function (c) {
+                        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+                    })
+                    .join("")
+                );
+                var jsonVal = JSON.parse(jsonPayload);
+                console.log(jsonVal);
+                const exp = jsonVal.exp;
+                console.log(exp);
+                if (exp < (new Date().getTime() + 1) / 1000) {
+                    localStorage.removeItem('jwt')
+                        window.location.href = "/"
+                }   
+            } catch (err) {
+                console.log(err);
+                return false;
+            }
+            return true;
         }
+        function onLoad() {
+            const token = localStorage.getItem('jwt');
+            if(token) {
+                //getDasboard();
+            }
+            else{
+                login();
+            }
+        }
+        //onLoad();
+
+        window.onpopstate = function(event){
+            window.location.href = "/";
+        }
+        
         
             function ChangeUrl(page, url) {
         if (typeof (history.pushState) != "undefined") {
@@ -193,6 +184,14 @@ router.get('/todo', function(req, res, next) {
             ChangeUrl('dashboard', 'dashboard.htm');
         });
     });
+
+    setTimeout(() => {
+                        if(!isAuthenticated()){
+                            localStorage.removeItem('jwt')
+                            window.location.href = "/";
+                        }
+                    }, 65000);
+
 </script>
 
     </script>

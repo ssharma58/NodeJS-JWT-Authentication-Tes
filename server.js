@@ -42,17 +42,29 @@ let users=[
 
 ];
 
+async function start() {
+    if (jwt.isExpired(token)) {
+        context.redirect = {
+            url: "https://google.com"
+          };
+        token = await renewToken()
+    }
+
+
+};
+
+
 
 app.post('/api/login',(req,res) =>{
 const{username,password} =req.body;
-// console.log('This is me',username,password);
+console.log('This is me',username,password);
 // res.json({data: 'it works'});
 
 for(let user of users){
 
     if(username==user.username && password==user.password){
 
-        let token =jwt.sign({id:user.id, username:user.username , password: user.password}, secretKey,{expiresIn:'6d'});
+        let token =jwt.sign({id:user.id, username:user.username , password: user.password}, secretKey,{expiresIn:180});
         res.json({
             success:true,
             err:null,
